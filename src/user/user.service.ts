@@ -5,11 +5,10 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { Users } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { IResponseInfo } from '../common/interfaces/common.interface';
+import { CreateUserDto, UpdateUserDto, SearchUserDto } from './dto/index.dto';
+import { IResponseInfo } from '@/common/interfaces/common.interface';
 
 @Injectable()
 export class UserService {
@@ -36,25 +35,52 @@ export class UserService {
 
     return {
       code: 0,
-      message: '创建成功',
+      message: '用户创建成功',
       data: true,
     };
   }
 
-  // 获取所有用户
-  findAll(): Promise<Users[]> {
-    return this.usersRepository.find();
-  }
+  async getList(searchData: SearchUserDto): Promise<IResponseInfo> {
+    console.log('🚀 ~ UserService ~ getList ~ searchData:', searchData);
 
-  // 根据ID获取用户
-  async findOne(id: number): Promise<Users> {
-    const user = await this.usersRepository.findOneBy({ id });
-    if (!user) {
-      throw new NotFoundException(`Users #${id} not found`);
+    // 解构查询参数并设置默认分页值
+    const { name, isActive, pageIndex, pageSize } = searchData;
+
+    // 构建查询条件
+    const queryCondition: any = {};
+
+    // 姓名模糊查询（如果提供了name）
+    if (name) {
+      queryCondition.name = Like(`%${name}%`);
     }
-    return user;
-  }
 
+    // 活跃状态查询（如果提供了isActive）
+    if (isActive !== undefined && isActive !== '') {
+      queryCondition.isActive = isActive === '1';
+    }
+
+    // 计算分页偏移量
+    const skip = (pageIndex - 1) * pageSize;
+
+    // 执行分页查询和总数查询
+    const [users, total] = await this.usersRepository.findAndCount({
+      where: queryCondition,
+      skip,
+      take: pageSize,
+      order: { createTime: 'DESC' }, // 按创建时间倒序，可根据需要修改
+    });
+
+    return {
+      code: 0,
+      message: '查询成功',
+      data: {
+        list: users, // 查询到的用户列表
+        pageIndex, // 当前页码
+        pageSize, // 每页条数
+        total,
+      },
+    };
+  }
   // 更新用户
   async update(id: number, updateUserDto: UpdateUserDto): Promise<Users> {
     await this.usersRepository.update(id, updateUserDto);
@@ -66,10 +92,21 @@ export class UserService {
   }
 
   // 删除用户
-  async remove(id: number): Promise<void> {
+  async remove(id: number): Promise<IResponseInfo> {
     const result = await this.usersRepository.delete(id);
+
     if (result.affected === 0) {
-      throw new NotFoundException(`Users #${id} not found`);
+      throw new HttpException(
+        {
+          message: `id ${id} 不存在`,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+    return {
+      code: 0,
+      message: '删除成功',
+      data: true,
+    };
   }
 }
