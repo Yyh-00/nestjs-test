@@ -19,6 +19,8 @@ export class UserService {
 
   // 创建用户
   async create(createUserDto: CreateUserDto): Promise<IResponseInfo> {
+    console.log('🚀 ~ UserService ~ create ~ createUserDto:', createUserDto);
+
     const repeatUser = await this.usersRepository.findOne({
       where: { name: createUserDto.name },
     });
@@ -31,8 +33,10 @@ export class UserService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    this.usersRepository.create(createUserDto);
+    const userEntity = this.usersRepository.create(createUserDto);
+    console.log('🚀 ~ UserService ~ create ~ userEntity:', userEntity);
 
+    await this.usersRepository.save(userEntity);
     return {
       code: 0,
       message: '用户创建成功',
@@ -41,13 +45,8 @@ export class UserService {
   }
 
   async getList(searchData: SearchUserDto): Promise<IResponseInfo> {
-    console.log('🚀 ~ UserService ~ getList ~ searchData:', searchData);
-
-    // 解构查询参数并设置默认分页值
     const { name, isActive, pageIndex, pageSize } = searchData;
-
-    // 构建查询条件
-    const queryCondition: any = {};
+    const queryCondition: { name?: any; isActive?: any } = {}; // 构建查询条件
 
     // 姓名模糊查询（如果提供了name）
     if (name) {
@@ -74,13 +73,25 @@ export class UserService {
       code: 0,
       message: '查询成功',
       data: {
-        list: users, // 查询到的用户列表
-        pageIndex, // 当前页码
-        pageSize, // 每页条数
+        list: users,
+        pageIndex,
+        pageSize,
         total,
       },
     };
   }
+
+  // 获取用户信息
+  async getInfo(id: number): Promise<IResponseInfo> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+
+    return {
+      code: 0,
+      message: '查询成功',
+      data: user,
+    };
+  }
+
   // 更新用户
   async update(id: number, updateUserDto: UpdateUserDto): Promise<Users> {
     await this.usersRepository.update(id, updateUserDto);

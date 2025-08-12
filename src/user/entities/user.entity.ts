@@ -14,17 +14,28 @@ export class Users {
   @Column({ length: 50, unique: true }) // 限制字符串长度为 50，示该字段的值必须唯一（数据库层面会创建唯一索引），避免重复name。
   name: string; // 对应数据库中 VARCHAR(50) 类型，未指定 length 时，默认字符串长度通常为 255，对应 VARCHAR(255)
 
-  @Column({ default: true }) //置默认值为 true
-  isActive: boolean; // 布尔类型在数据库中通常映射为 TINYINT(1)（1 表示 true，0 表示 false）
+  @Column({ default: 0 }) //置默认值为 true
+  isActive: number; // 布尔类型在数据库中通常映射为 TINYINT(1)（1 表示 true，0 表示 false）
 
   // 13位时间戳更新时间字段
-  @Column({ name: 'update_time', type: 'bigint' })
+  @Column({
+    name: 'update_time',
+    type: 'bigint',
+    transformer: {
+      to: (value: number) => value,
+      from: (value: number) => Number(value),
+    },
+  })
   updateTime: number;
 
   // 可选：创建时间字段（13位时间戳）
   @Column({
     name: 'create_time',
     type: 'bigint',
+    transformer: {
+      to: (value: number) => value,
+      from: (value: number) => Number(value),
+    },
   })
   createTime: number;
 
@@ -32,6 +43,7 @@ export class Users {
   @BeforeInsert()
   setTimestampsOnInsert() {
     const now = Date.now(); // 获取13位时间戳
+
     this.createTime = now;
     this.updateTime = now;
   }

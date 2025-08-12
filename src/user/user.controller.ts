@@ -22,8 +22,12 @@ export class UserController {
 
   @Get('getList')
   getList(@Query() searchData: SearchUserDto) {
-    console.log('🚀 ~ UserController ~ getList ~ searchData:', searchData);
     return this.userService.getList(searchData);
+  }
+
+  @Get('getInfo')
+  getInfo(@Query() id: string) {
+    return this.userService.getInfo(+id);
   }
 
   @Put('update/:id')
@@ -33,6 +37,6 @@ export class UserController {
 
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+    return this.userService.remove(+id); // 物理删除
   }
 }

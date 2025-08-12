@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
+import { Users } from '@/user/entities/user.entity';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { ConfigModule } from '@nestjs/config';
       username: 'root', // 你的数据库用户名
       password: '123456', // 你的数据库密码
       database: 'nest-test-database', // 数据库名称
-      entities: [],
+      entities: [Users],
       synchronize: true, // 开发环境下使用，自动同步实体到数据库
       autoLoadEntities: true, // 自动加载实体
       logging: true, // 打印SQL日志
