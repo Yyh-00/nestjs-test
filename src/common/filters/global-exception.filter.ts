@@ -26,7 +26,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message:
           typeof errorResponse === 'object'
             ? isArray((errorResponse as any).message)
-              ? (errorResponse as any).message.join(', ')
+              ? (errorResponse as any).message[0]
               : (errorResponse as any).message || exception.message
             : errorResponse || exception.message, // 错误信息
         data: null, // 数据字段（异常时通常为 null）

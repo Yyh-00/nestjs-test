@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { Users } from './entities/user.entity';
@@ -19,22 +14,10 @@ export class UserService {
 
   // 创建用户
   async create(createUserDto: CreateUserDto): Promise<IResponseInfo> {
-    console.log('🚀 ~ UserService ~ create ~ createUserDto:', createUserDto);
+    const { name } = createUserDto;
 
-    const repeatUser = await this.usersRepository.findOne({
-      where: { name: createUserDto.name },
-    });
-
-    if (repeatUser) {
-      throw new HttpException(
-        {
-          message: `用户名 ${createUserDto.name} 已存在`,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    await this.findReaptUserByName(name);
     const userEntity = this.usersRepository.create(createUserDto);
-    console.log('🚀 ~ UserService ~ create ~ userEntity:', userEntity);
 
     await this.usersRepository.save(userEntity);
     return {
@@ -83,7 +66,7 @@ export class UserService {
 
   // 获取用户信息
   async getInfo(id: number): Promise<IResponseInfo> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.vaildIdExist(id);
 
     return {
       code: 0,
@@ -93,20 +76,49 @@ export class UserService {
   }
 
   // 更新用户
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<Users> {
-    await this.usersRepository.update(id, updateUserDto);
-    const updatedUser = await this.usersRepository.findOneBy({ id });
-    if (!updatedUser) {
-      throw new NotFoundException(`Users #${id} not found`);
-    }
-    return updatedUser;
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<IResponseInfo> {
+    await this.vaildIdExist(id);
+    await this.findReaptUserByName(updateUserDto.name);
+
+    return {
+      code: 0,
+      data: true,
+      message: '更新成功',
+    };
   }
 
   // 删除用户
   async remove(id: number): Promise<IResponseInfo> {
-    const result = await this.usersRepository.delete(id);
+    await this.vaildIdExist(id);
 
-    if (result.affected === 0) {
+    return {
+      code: 0,
+      message: '删除成功',
+      data: true,
+    };
+  }
+
+  async findReaptUserByName(name: string): Promise<boolean> {
+    const repeatUser = await this.usersRepository.findOneBy({ name });
+
+    if (repeatUser) {
+      throw new HttpException(
+        {
+          message: `用户名 ${name} 已存在`,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return true;
+  }
+
+  async vaildIdExist(id: string | number): Promise<any> {
+    const user = await this.usersRepository.findOneBy({ id: +id });
+
+    if (!user) {
       throw new HttpException(
         {
           message: `id ${id} 不存在`,
@@ -114,10 +126,6 @@ export class UserService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    return {
-      code: 0,
-      message: '删除成功',
-      data: true,
-    };
+    return user;
   }
 }
