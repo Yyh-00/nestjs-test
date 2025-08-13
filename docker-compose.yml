@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  nest_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nest_app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # 其他环境变量（如数据库配置）
+    # env_file:
+    #   - .env.production
+    networks:
+      - nginx_network # 使用现有Nginx所在的网络
+    expose:
+      - 3000 # 只暴露端口不映射到宿主机
+networks:
+  nginx_network:
+    external: true # 声明使用外部网络

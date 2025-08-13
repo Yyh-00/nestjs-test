@@ -16,7 +16,7 @@ import { Users } from '@/user/entities/user.entity';
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'localhost',
+      host: '121.199.172.203',
       port: 3306,
       username: 'root', // 你的数据库用户名
       password: '123456', // 你的数据库密码
